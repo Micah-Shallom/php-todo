@@ -58,6 +58,16 @@ pipeline {
             sh "zip -qr php-todo.zip ${WORKSPACE}/*"
         }
     }
+    stage('SonarQube Quality Gate') {
+        environment {
+            scannerHome = tool 'SonarQubeScanner'
+        }
+        steps {
+            withSonarQubeEnv('sonarqube') {
+                sh "${scannerHome}/bin/sonar-scanner"
+            }
+        }
+    }
     stage ('Upload Artifact to Artifactory') {
         steps {
             script { 
@@ -77,10 +87,11 @@ pipeline {
                 }
         }
     }
+
     stage ('Deploy to Dev Environment') {
         steps {
             build job: 'ansible-config-mgt/main', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
         }
-  }
+    }
   }
 }
